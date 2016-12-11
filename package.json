@@ -1,6 +1,6 @@
 {
   "name": "fisx-hook-relative",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Relative path support for fisx",
   "main": "index.js",
   "scripts": {
