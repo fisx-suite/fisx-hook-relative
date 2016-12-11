@@ -73,7 +73,7 @@ function onStandardRestoreUri(message) {
     if (!file.relative || !info.file) {
         return;
     }
-
+    // console.log('uri ret: %s, value: %s', message.ret, message.value)
     var query = (info.file.query && info.query) ? '&' + info.query.substring(1) : info.query;
     message.ret = wrap(info.quote + info.file.subpath + query + info.quote);
 }
@@ -117,7 +117,7 @@ function onFetchRelativeUrl(message) {
 
 module.exports = function (fis, opts) {
 
-    fis.on('proccess:end', onProcessEnd);
+    fis.on('process:end', onProcessEnd);
     fis.on('standard:restore:uri', onStandardRestoreUri);
     fis.on('pack:file', onPackFile);
 
