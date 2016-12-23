@@ -5,12 +5,12 @@
  *         sparklewhy@gmail.com
  */
 
-var rUrl = /__relative\(([\s\S]*?)\)/g;
+var rUrl = /__relative<<<([\s\S]*?)>>>/g;
 var path = require('path');
 var rFile = /\.[^\.]+$/;
 
 function wrap(value) {
-    return '__relative(' + value + ')';
+    return '__relative<<<' + value + '>>>';
 }
 
 function getRelativeUrl(file, host) {
@@ -32,7 +32,8 @@ function getRelativeUrl(file, host) {
         }
     }
 
-    var relativeFrom = typeof host.relative === 'string' ? host.relative : host.release;
+    var relativeFrom = typeof host.relative === 'string'
+        ? host.relative : host.release;
     if (rFile.test(relativeFrom)) {
         relativeFrom = path.dirname(relativeFrom);
     }
@@ -57,12 +58,22 @@ function convert(content, file, host) {
         // 再编译一遍，为了保证 hash 值是一样的。
         fis.compile(info.file);
 
-        var query = (info.file.query && info.query) ? '&' + info.query.substring(1) : info.query;
+        var query = info.query;
         var hash = info.hash || info.file.hash;
         var url = getRelativeUrl(info.file, host || file);
-        return info.quote + url + query + hash + info.quote;
+        var parts = url.split('?');
+
+        if (parts.length > 1 && query)  {
+            url = parts[0] + query + '&amp;' + parts[1];
+        }
+        else if (query) {
+            url += query;
+        }
+
+        return info.quote + url + hash + info.quote;
     });
 }
+
 
 function onStandardRestoreUri(message) {
     var file = message.file;
@@ -70,12 +81,11 @@ function onStandardRestoreUri(message) {
 
     // 没有配置，不开启。
     // 或者目标文件不存在
-    if (!file.relative || !info.file) {
+    if (!file.relative || !info.file || file.isInline) {
         return;
     }
-    // console.log('uri ret: %s, value: %s', message.ret, message.value)
-    var query = (info.file.query && info.query) ? '&' + info.query.substring(1) : info.query;
-    message.ret = wrap(info.quote + info.file.subpath + query + info.quote);
+
+    message.ret = wrap(info.quote + info.file.subpath + info.query + info.quote);
 }
 
 function onProcessEnd(file) {
@@ -116,7 +126,6 @@ function onFetchRelativeUrl(message) {
 }
 
 module.exports = function (fis, opts) {
-
     fis.on('process:end', onProcessEnd);
     fis.on('standard:restore:uri', onStandardRestoreUri);
     fis.on('pack:file', onPackFile);
